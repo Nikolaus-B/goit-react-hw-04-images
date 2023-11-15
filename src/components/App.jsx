@@ -15,6 +15,7 @@ export const App = () => {
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [isFirstRender, setIsFirstRender] = useState(true);
 
   useEffect(() => {
     if (query === '') {
@@ -38,6 +39,7 @@ export const App = () => {
         setError(true);
       } finally {
         setIsLoading(false);
+        setIsFirstRender(false);
       }
     }
 
@@ -58,11 +60,8 @@ export const App = () => {
     <Container>
       <Searchbar submitClick={onSubmitClick} />
       {error && <ErrorText />}
-      {!isLoading && images.length > 0 ? (
-        <ImageGallery images={images} />
-      ) : (
-        <StartMessage />
-      )}
+      {isFirstRender && <StartMessage />}
+      {images.length > 0 && <ImageGallery images={images} />}
       {isLoading && <Loader />}
       {images.length > 0 && <Button loadMoreBtnClick={onLoadMoreClick} />}
       <GlobalStyle />
