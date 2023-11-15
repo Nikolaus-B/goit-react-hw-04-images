@@ -7,6 +7,7 @@ import { Searchbar } from './Searchbar/Searchbar';
 import { Loader } from './Loader/Loader';
 import { useEffect, useState } from 'react';
 import { fetchImages } from './api';
+import { StartMessage } from './StartMessage/StartMessage';
 
 export const App = () => {
   const [images, setImages] = useState([]);
@@ -57,7 +58,11 @@ export const App = () => {
     <Container>
       <Searchbar submitClick={onSubmitClick} />
       {error && <ErrorText />}
-      {images.length > 0 && <ImageGallery images={images} />}
+      {!isLoading && images.length > 0 ? (
+        <ImageGallery images={images} />
+      ) : (
+        <StartMessage />
+      )}
       {isLoading && <Loader />}
       {images.length > 0 && <Button loadMoreBtnClick={onLoadMoreClick} />}
       <GlobalStyle />
