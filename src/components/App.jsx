@@ -1,97 +1,67 @@
-import { Component } from 'react';
-import { Container, GlobalStyle } from './GlobalStyle';
-import { Searchbar } from './Searchbar/Searchbar';
-import { ImageGallery } from './ImageGallery/ImageGallery';
-import { fetchImages } from './api';
-import { Button } from './Button/Button';
-import { Loader } from './Loader/Loader';
-import { ErrorText } from './ErrorText/ErrorText';
 import toast, { Toaster } from 'react-hot-toast';
+import { Button } from './Button/Button';
+import { ErrorText } from './ErrorText/ErrorText';
+import { Container, GlobalStyle } from './GlobalStyle';
+import { ImageGallery } from './ImageGallery/ImageGallery';
+import { Searchbar } from './Searchbar/Searchbar';
+import { Loader } from './Loader/Loader';
+import { useEffect, useState } from 'react';
+import { fetchImages } from './api';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    isLoading: false,
-    error: false,
-  };
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-  async componentDidMount() {
-    try {
-      this.setState({ isLoading: true, error: false });
-
-      const initialImages = await fetchImages(
-        this.state.query,
-        this.state.page
-      );
-      this.setState({
-        images: initialImages,
-      });
-    } catch (err) {
-      this.setState({ error: true });
-    } finally {
-      this.setState({ isLoading: false });
+  useEffect(() => {
+    if (query === '') {
+      return;
     }
-  }
 
-  async componentDidUpdate(prevProps, prevState) {
-    if (
-      prevState.query !== this.state.query ||
-      prevState.page !== this.state.page
-    ) {
-      const clearQuery = this.state.query.split('/').pop();
+    async function getImages() {
+      const clearQuery = query.split('/').pop();
       try {
-        this.setState({ isLoading: true, error: false });
+        setIsLoading(true);
+        setError(false);
 
-        const newImages = await fetchImages(clearQuery, this.state.page);
+        const newImages = await fetchImages(clearQuery, page);
 
         if (newImages.length === 0) {
           toast.error('No more images available');
         } else {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...newImages],
-          }));
+          setImages(prevImages => [...prevImages, ...newImages]);
         }
-      } catch (err) {
-        this.setState({ error: true });
+      } catch (error) {
+        setError(true);
       } finally {
-        this.setState({ isLoading: false });
+        setIsLoading(false);
       }
     }
-  }
 
-  onSubmitClick = searchedQuery => {
-    this.setState({
-      query: `${Date.now()}/${searchedQuery}`,
-      page: 1,
-      images: [],
-    });
+    getImages();
+  }, [query, page]);
+
+  const onSubmitClick = searchedQuery => {
+    setImages([]);
+    setQuery(`${Date.now()}/${searchedQuery}`);
+    setPage(1);
   };
 
-  onLoadMoreClick = () => {
-    this.setState(prevState => {
-      return {
-        page: prevState.page + 1,
-      };
-    });
+  const onLoadMoreClick = () => {
+    setPage(prevPage => prevPage + 1);
   };
 
-  render() {
-    const { images, isLoading, error } = this.state;
-
-    return (
-      <Container>
-        <Searchbar submitClick={this.onSubmitClick} />
-        {error && <ErrorText />}
-        {images.length > 0 && <ImageGallery images={images} />}
-        {isLoading && <Loader />}
-        {images.length > 0 && (
-          <Button loadMoreBtnClick={this.onLoadMoreClick} />
-        )}
-        <GlobalStyle />
-        <Toaster />
-      </Container>
-    );
-  }
-}
+  return (
+    <Container>
+      <Searchbar submitClick={onSubmitClick} />
+      {error && <ErrorText />}
+      {images.length > 0 && <ImageGallery images={images} />}
+      {isLoading && <Loader />}
+      {images.length > 0 && <Button loadMoreBtnClick={onLoadMoreClick} />}
+      <GlobalStyle />
+      <Toaster />
+    </Container>
+  );
+};
